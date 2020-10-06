@@ -5,25 +5,24 @@ var taskRespawn = require('task.respawn');
 
 module.exports.loop = function () {
 
-    var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
+    //gathering existing Creeps
+	var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
 	var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
 	var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
+	
+	console.log('Harvesters: '+harvesters.length+', Upgraders: '+upgraders.length+', Builders: '+builders.length);
 
-    for(var name in Game.creeps) {
-        for(var name in Game.rooms) {
-        console.log('Room "'+name+'" has '+Game.rooms[name].energyAvailable+' energy, '+'Harvesters: '+harvesters.length+', Upgraders: '+upgraders.length+', Builders: '+builders.length);
+    for(var name in Game.rooms) {
+        console.log('Room "'+name+'" has '+Game.rooms[name].energyAvailable+' energy');
 		console.log();
-		}
 	}
 	
     if(harvesters.length < 1) {
         taskRespawn.run('harvester');
     } else if(upgraders.length < 1) {
         taskRespawn.run('upgrader');
-    } else if(builders.length < 1) {
+    } else if(builders.length < 4) {
         taskRespawn.run('builder');
-    }else if(harvesters.length < 2) {
-        taskRespawn.run('harvester');
     }
     
     if(Game.spawns['Spawn1'].spawning) { 
@@ -34,6 +33,24 @@ module.exports.loop = function () {
             Game.spawns['Spawn1'].pos.y, 
             {align: 'left', opacity: 0.8});
     }
+	
+	for(var name in Game.structures) {
+        if(Game.structures[name].structureType == STRUCTURE_TOWER) {
+			var tower = Game.structures[name];
+		}
+		if(tower) {
+			var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+			var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+				filter: (structure) => structure.hits < structure.hitsMax
+			});
+			if(closestHostile) {
+				tower.attack(closestHostile);
+			} else if(closestDamagedStructure) {
+				tower.repair(closestDamagedStructure);
+			}
+			var tower = false;
+		}
+	}
 
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];

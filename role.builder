@@ -1,3 +1,5 @@
+var roleHarvester = require('role.harvester');
+
 var roleBuilder = {
 
     /** @param {Creep} creep **/
@@ -20,9 +22,7 @@ var roleBuilder = {
                 }
             }
 			else {
-				if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-					creep.moveTo(creep.room.controller);
-				}
+				roleHarvester.run(creep);
 			}
 	    }
 	    else {

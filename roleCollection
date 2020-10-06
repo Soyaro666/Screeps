@@ -1,0 +1,80 @@
+var roleCollection = {
+	
+    /** @param {Creep} creep **/
+	run: function(creep) {
+		if(creep.memory.task == 'builder') {
+			var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+			if(targets.length > 0 && creep.store[RESOURCE_ENERGY] > 0) {
+				var target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES);
+				if(creep.build(target) == ERR_NOT_IN_RANGE) {
+					creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+				}
+			} else {
+				creep.memory.task = 'charger';
+			}
+		}
+		
+		if(creep.memory.task == 'charger') {
+			var targets = creep.room.find(FIND_STRUCTURES, {
+				filter: (structure) => {
+					return (structure.structureType == STRUCTURE_EXTENSION ||
+							structure.structureType == STRUCTURE_SPAWN ||
+							structure.structureType == STRUCTURE_TOWER) && 
+							structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+				}
+			});
+			if(targets.length > 0 && creep.store[RESOURCE_ENERGY] > 0) {
+				if(creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD) == 0) {
+					creep.say('new road');
+				}
+				if(creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+					creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+				}
+			} else {
+				creep.memory.task = 'upgrader';
+			}
+		}
+		
+		if(creep.memory.task == 'upgrader') {
+			if(creep.store[RESOURCE_ENERGY] == 0) {
+				creep.memory.task = 'miner';
+			} else if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
+				creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
+			}
+		}
+		
+		if(creep.memory.task == 'miner') {
+			var sources = creep.room.find(FIND_SOURCES_ACTIVE);
+			if(!sources.length) {
+				var sources = creep.room.find(FIND_SOURCES, {
+					filter: (source) => {
+						return (source.energy > source.energyCapacity / 3);
+					}
+				});
+				if(!sources.length) {
+					var sources = creep.room.find(FIND_SOURCES, {
+						filter: (source) => {
+							return (source.energy > source.energyCapacity / 4);
+						}
+					});
+					if(!sources.length) {
+						var sources = creep.room.find(FIND_SOURCES);
+					}
+				}
+			}
+			var source = creep.pos.findClosestByPath(sources);
+			if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
+				creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
+			}
+			if(creep.store.getFreeCapacity() == 0) {
+				creep.memory.task = false;
+			}
+		}
+		
+		if(!creep.memory.task) {
+			creep.memory.task = creep.memory.role;
+		}
+	}
+};
+
+module.exports = roleCollection;

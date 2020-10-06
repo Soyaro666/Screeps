@@ -1,67 +1,93 @@
-var roleHarvester = require('role.harvester');
-var roleUpgrader = require('role.upgrader');
-var roleBuilder = require('role.builder');
+var roleCollection = require('roleCollection');
 var taskRespawn = require('task.respawn');
 
 module.exports.loop = function () {
 
     //gathering existing Creeps
-	var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
 	var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
+	var chargers = _.filter(Game.creeps, (creep) => creep.memory.role == 'charger');
 	var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
 	
-	console.log('Harvesters: '+harvesters.length+', Upgraders: '+upgraders.length+', Builders: '+builders.length);
+	console.log('Chargers: '+chargers.length+', Upgraders: '+upgraders.length+', Builders: '+builders.length);
 
     for(var name in Game.rooms) {
         console.log('Room "'+name+'" has '+Game.rooms[name].energyAvailable+' energy');
-		console.log();
-	}
-	
-    if(harvesters.length < 1) {
-        taskRespawn.run('harvester');
-    } else if(upgraders.length < 1) {
-        taskRespawn.run('upgrader');
-    } else if(builders.length < 4) {
-        taskRespawn.run('builder');
-    }
-    
-    if(Game.spawns['Spawn1'].spawning) { 
-        var spawningCreep = Game.creeps[Game.spawns['Spawn1'].spawning.name];
-        Game.spawns['Spawn1'].room.visual.text(
-            '🛠️' + spawningCreep.memory.role,
-            Game.spawns['Spawn1'].pos.x + 1, 
-            Game.spawns['Spawn1'].pos.y, 
-            {align: 'left', opacity: 0.8});
-    }
-	
-	for(var name in Game.structures) {
-        if(Game.structures[name].structureType == STRUCTURE_TOWER) {
-			var tower = Game.structures[name];
-		}
-		if(tower) {
-			var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-			var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
-				filter: (structure) => structure.hits < structure.hitsMax
-			});
-			if(closestHostile) {
-				tower.attack(closestHostile);
-			} else if(closestDamagedStructure) {
-				tower.repair(closestDamagedStructure);
+		
+		var roomLevel = Game.rooms[name].controller.level
+		var maxUpgraders = roomLevel;
+		var maxChargers = 1;
+		var maxBuilders = 2 * roomLevel;
+		for(var builds in Game.rooms[name].structures) {
+			var maxChargers = Game.structures[builds].room.find(FIND_STRUCTURES, {
+				filter: (structure) => {
+					return (structure.structureType == STRUCTURE_EXTENSION ||
+							structure.structureType == STRUCTURE_SPAWN ||
+							structure.structureType == STRUCTURE_TOWER);
+				}
+			}).length;
+			if(Game.structures[name].structureType == STRUCTURE_TOWER) {
+				var tower = Game.structures[name];
 			}
-			var tower = false;
+			if(tower) {
+				var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+				var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+					filter: (structure) => structure.hits < structure.hitsMax
+				});
+				if(closestHostile) {
+					tower.attack(closestHostile);
+				} else if(closestDamagedStructure) {
+					tower.repair(closestDamagedStructure);
+				}
+				var tower = false;
+			}
+		}
+		
+		if(maxChargers > 0) {
+			var maxChargers = maxChargers / 4 * roomLevel;
+		}
+		
+		var maxUpgraders = maxUpgraders - maxChargers;
+		
+		console.log('max Chargers: '+maxChargers+', max Upgraders: '+maxUpgraders+', max Builders: '+maxBuilders);
+		
+		if(chargers.length < maxChargers) {
+			taskRespawn.run('charger');
+		} else if(upgraders.length < maxUpgraders) {
+			taskRespawn.run('upgrader');
+		} else if(builders.length < maxBuilders) {
+			taskRespawn.run('builder');
+		}
+		
+		if(Game.spawns['Spawn1'].spawning) { 
+			var spawningCreep = Game.creeps[Game.spawns['Spawn1'].spawning.name];
+			Game.spawns['Spawn1'].room.visual.text(
+				'🛠️' + spawningCreep.memory.role,
+				Game.spawns['Spawn1'].pos.x + 1, 
+				Game.spawns['Spawn1'].pos.y, 
+				{align: 'left', opacity: 0.8});
+		}
+		
+		if(roomLevel > 1) {
+			var rng1 = Math.random() * 10 - 5;
+			var rng2 = Math.random() * 10 - 5;
+			if(Game.spawns['Spawn1'].room.createConstructionSite(Game.spawns['Spawn1'].pos.x+rng1, Game.spawns['Spawn1'].pos.y+rng2, STRUCTURE_EXTENSION) == 0) {
+				console.log('new Extension');
+			}
+			if(roomLevel > 2) {
+				var rng1 = rng1 / 2;
+				var rng2 = rng2 / 2;
+				if(Game.spawns['Spawn1'].room.createConstructionSite(Game.spawns['Spawn1'].pos.x+rng1, Game.spawns['Spawn1'].pos.y+rng2, STRUCTURE_TOWER) == 0) {
+					console.log('new Tower');
+				}
+			}
 		}
 	}
 
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
-        if(creep.memory.role == 'harvester') {
-            roleHarvester.run(creep);
-        }
-		if(creep.memory.role == 'upgrader') {
-			roleUpgrader.run(creep);
+		if(creep.memory.role == 'harvester') {
+			creep.memory.role = 'charger';
 		}
-        if(creep.memory.role == 'builder') {
-            roleBuilder.run(creep);
-        }
+		roleCollection.run(creep);
     }
 }

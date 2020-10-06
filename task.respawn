@@ -3,11 +3,17 @@ var taskRespawn = {
 	 /** @param {Role} assign **/
     run: function(assign) {
 		var newName = assign + Game.time;
-        var spawning = Game.spawns['Spawn1'].spawnCreep([WORK,WORK,WORK,WORK,CARRY,MOVE,MOVE], newName, {memory: {role: assign}});
+        var spawning = Game.spawns['Spawn1'].spawnCreep([WORK,WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: assign}});
 		if (spawning < -4 ) {
-			spawning = Game.spawns['Spawn1'].spawnCreep([WORK,WORK,CARRY,MOVE,MOVE], newName, {memory: {role: assign}});
+			spawning = Game.spawns['Spawn1'].spawnCreep([WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: assign}});
 			if (spawning < -4 ) {
-				spawning = Game.spawns['Spawn1'].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: assign}});
+				spawning = Game.spawns['Spawn1'].spawnCreep([WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: assign}});
+				if (spawning < -4 ) {
+					spawning = Game.spawns['Spawn1'].spawnCreep([WORK,CARRY,CARRY,MOVE,MOVE], newName, {memory: {role: assign}});
+					if (spawning < -4 ) {
+						spawning = Game.spawns['Spawn1'].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: assign}});
+					}
+				}
 			}
 		}
 		if (spawning == 0 ) {

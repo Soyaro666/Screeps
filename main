@@ -89,7 +89,7 @@ module.exports.loop = function () {
 			if(spawn) {
 				var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
 				for(var dest in sources) {
-					var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest].x, sources[dest].y);
+					var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest]);
 					for(var road in newStreet) {
 						Game.spawns[spawn].room.createConstructionSite(newStreet[road].x, newStreet[road].y, STRUCTURE_ROAD)
 					}

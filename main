@@ -2,35 +2,35 @@ var roleCollection = require('roleCollection');
 var taskRespawn = require('task.respawn');
 
 module.exports.loop = function () {
-
-    //gathering existing Creeps
-	var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
-	var chargers = _.filter(Game.creeps, (creep) => creep.memory.role == 'charger');
-	var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
 	
-	console.log('Chargers: '+chargers.length+', Upgraders: '+upgraders.length+', Builders: '+builders.length);
-
-    for(var name in Game.rooms) {
-        console.log('Room "'+name+'" has '+Game.rooms[name].energyAvailable+' energy');
+	for(var name in Game.rooms) {
+        console.log('Room "'+name+'" has '+Game.rooms[name].energyAvailable+' of '+Game.rooms[name].energyCapacityAvailable+' energy');
+		
+		//gathering existing Creeps
+		var localCreeps = Game.rooms[name].find(FIND_MY_CREEPS);
+		var attackers = _.filter(localCreeps, (creep) => creep.memory.role == 'attacker');
+		var upgraders = _.filter(localCreeps, (creep) => creep.memory.role == 'upgrader');
+		var chargers = _.filter(localCreeps, (creep) => creep.memory.role == 'charger');
+		var builders = _.filter(localCreeps, (creep) => creep.memory.role == 'builder');
+		var localSpawns = Game.rooms[name].find(FIND_MY_SPAWNS);
+		var spawn = localSpawns[0].name;
 		
 		var roomLevel = Game.rooms[name].controller.level
-		var maxUpgraders = roomLevel;
-		var maxChargers = 1;
-		var maxBuilders = 2 * roomLevel;
+		var maxAttackers = roomLevel * 2;
 		for(var builds in Game.rooms[name].structures) {
-			var maxChargers = Game.structures[builds].room.find(FIND_STRUCTURES, {
+			/*var maxAttackers = Game.structures[builds].room.find(FIND_MY_STRUCTURES, {
 				filter: (structure) => {
 					return (structure.structureType == STRUCTURE_EXTENSION ||
 							structure.structureType == STRUCTURE_SPAWN ||
 							structure.structureType == STRUCTURE_TOWER);
 				}
-			}).length;
+			}).length;*/
 			if(Game.structures[name].structureType == STRUCTURE_TOWER) {
 				var tower = Game.structures[name];
 			}
 			if(tower) {
 				var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-				var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+				var closestDamagedStructure = tower.pos.findClosestByRange(FIND_MY_STRUCTURES, {
 					filter: (structure) => structure.hits < structure.hitsMax
 				});
 				if(closestHostile) {
@@ -41,53 +41,78 @@ module.exports.loop = function () {
 				var tower = false;
 			}
 		}
+		console.log('Attackers: '+attackers.length+' of '+maxAttackers+', Chargers: '+chargers.length+' of '+roomLevel+', Upgraders: '+upgraders.length+' of 1, Builders: '+builders.length+' of 1');
 		
-		if(maxChargers > 0) {
-			var maxChargers = maxChargers / 4 * roomLevel;
+		var newTask = false
+		if(chargers.length < roomLevel) {
+			var newName = 'charger' + Game.time;
+			var spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: 'charger'}});
+		} else if(upgraders.length < 1) {
+			var newName = 'upgrader' + Game.time;
+			var spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: 'upgrader'}});
+		} else if(builders.length < 1) {
+			var newName = 'builder' + Game.time;
+			var spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: 'builder'}});
+		} else if(attackers.length < maxAttackers) {
+			newTask = 'attacker';
 		}
 		
-		var maxUpgraders = maxUpgraders - maxChargers;
-		
-		console.log('max Chargers: '+maxChargers+', max Upgraders: '+maxUpgraders+', max Builders: '+maxBuilders);
-		
-		if(chargers.length < maxChargers) {
-			taskRespawn.run('charger');
-		} else if(upgraders.length < maxUpgraders) {
-			taskRespawn.run('upgrader');
-		} else if(builders.length < maxBuilders) {
-			taskRespawn.run('builder');
+		if(newTask) {
+			taskRespawn.run(newTask, Game.rooms[name].energyCapacityAvailable);
 		}
 		
-		if(Game.spawns['Spawn1'].spawning) { 
-			var spawningCreep = Game.creeps[Game.spawns['Spawn1'].spawning.name];
-			Game.spawns['Spawn1'].room.visual.text(
+		if(Game.spawns[spawn].spawning) { 
+			var spawningCreep = Game.creeps[Game.spawns[spawn].spawning.name];
+			Game.spawns[spawn].room.visual.text(
 				'🛠️' + spawningCreep.memory.role,
-				Game.spawns['Spawn1'].pos.x + 1, 
-				Game.spawns['Spawn1'].pos.y, 
+				Game.spawns[spawn].pos.x + 1, 
+				Game.spawns[spawn].pos.y, 
 				{align: 'left', opacity: 0.8});
 		}
 		
-		if(roomLevel > 1) {
-			var rng1 = Math.random() * 10 - 5;
-			var rng2 = Math.random() * 10 - 5;
-			if(Game.spawns['Spawn1'].room.createConstructionSite(Game.spawns['Spawn1'].pos.x+rng1, Game.spawns['Spawn1'].pos.y+rng2, STRUCTURE_EXTENSION) == 0) {
-				console.log('new Extension');
+		
+		var extenders = Game.rooms[name].find(FIND_MY_STRUCTURES, {
+			filter: (structure) => {
+				return (structure.structureType == STRUCTURE_EXTENSION);
 			}
-			if(roomLevel > 2) {
-				var rng1 = rng1 / 2;
-				var rng2 = rng2 / 2;
-				if(Game.spawns['Spawn1'].room.createConstructionSite(Game.spawns['Spawn1'].pos.x+rng1, Game.spawns['Spawn1'].pos.y+rng2, STRUCTURE_TOWER) == 0) {
-					console.log('new Tower');
+		});
+		var towers = Game.rooms[name].find(FIND_MY_STRUCTURES, {
+			filter: (structure) => {
+				return (structure.structureType == STRUCTURE_TOWER);
+			}
+		});
+		
+		var rng1 = Math.random() * 10 - 5;
+		var rng2 = Math.random() * 10 - 5;
+		
+		if(roomLevel == 1) {
+			if(spawn) {
+				var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
+				for(var dest in sources) {
+					var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest].x, sources[dest].y);
+					for(var road in newStreet) {
+						Game.spawns[spawn].room.createConstructionSite(newStreet[road].x, newStreet[road].y, STRUCTURE_ROAD)
+					}
+					
 				}
 			}
 		}
+		if(roomLevel == 2 && extenders.length < 5) {
+			if(Game.spawns[spawn].room.createConstructionSite(Game.spawns[spawn].pos.x+rng1, Game.spawns[spawn].pos.y+rng2, STRUCTURE_EXTENSION) == 0) {
+				console.log('new Extension');
+			}
+		}
+		if(roomLevel == 3 && towers.length < 1) {
+			var rng1 = rng1 / 2;
+			var rng2 = rng2 / 2;
+			if(Game.spawns[spawn].room.createConstructionSite(Game.spawns[spawn].pos.x+rng1, Game.spawns[spawn].pos.y+rng2, STRUCTURE_TOWER) == 0) {
+				console.log('new Tower');
+			}
+		}//*/
 	}
 
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
-		if(creep.memory.role == 'harvester') {
-			creep.memory.role = 'charger';
-		}
 		roleCollection.run(creep);
     }
 }

@@ -52,7 +52,7 @@ var roleCollection = {
 		
 		if(creep.memory.task == 'miner') {
 			var sources = creep.room.find(FIND_SOURCES_ACTIVE);
-			if(!sources.length) {
+			if(sources.length < 1) {
 				var sources = creep.room.find(FIND_SOURCES);
 			}
 			var source = creep.pos.findClosestByPath(sources);

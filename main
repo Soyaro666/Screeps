@@ -41,13 +41,13 @@ module.exports.loop = function () {
 				var tower = false;
 			}
 		}
-		console.log('Attackers: '+attackers.length+' of '+maxAttackers+', Chargers: '+chargers.length+' of '+roomLevel+', Upgraders: '+upgraders.length+' of 1, Builders: '+builders.length+' of 1');
+		console.log('Attackers: '+attackers.length+', Chargers: '+chargers.length+', Upgraders: '+upgraders.length+', Builders: '+builders.length);
 		
 		var newTask = false
-		if(chargers.length < roomLevel) {
+		if(chargers.length < roomLevel-attackers.length) {
 			var newName = 'charger' + Game.time;
 			var spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: 'charger'}});
-		} else if(upgraders.length < 1) {
+		} else if(upgraders.length < roomLevel-attackers.length) {
 			var newName = 'upgrader' + Game.time;
 			var spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: 'upgrader'}});
 		} else if(builders.length < 1) {
@@ -58,7 +58,7 @@ module.exports.loop = function () {
 		}
 		
 		if(newTask) {
-			taskRespawn.run(newTask, Game.rooms[name].energyCapacityAvailable);
+			taskRespawn.run(newTask, spawn, Game.rooms[name].energyCapacityAvailable);
 		}
 		
 		if(Game.spawns[spawn].spawning) { 
@@ -89,9 +89,11 @@ module.exports.loop = function () {
 			if(spawn) {
 				var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
 				for(var dest in sources) {
-					var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest]);
+					var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest], {ignoreCreeps:true, ignoreRoads:true});
 					for(var road in newStreet) {
-						Game.spawns[spawn].room.createConstructionSite(newStreet[road].x, newStreet[road].y, STRUCTURE_ROAD)
+						if(road < newStreet.length - 1) {
+							Game.spawns[spawn].room.createConstructionSite(newStreet[road].x, newStreet[road].y, STRUCTURE_ROAD)
+						}
 					}
 					
 				}

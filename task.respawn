@@ -3,15 +3,36 @@ var taskRespawn = {
 	 /** @param {Role} assign **/
     run: function(assign, spawn, energy) {
 		var newName = assign + Game.time;
-        var spawning = Game.spawns[spawn].spawnCreep([WORK,RANGED_ATTACK,CARRY,WORK,RANGED_ATTACK,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
-		if (spawning < -4 ) {
-			spawning = Game.spawns[spawn].spawnCreep([WORK,WORK,CARRY,RANGED_ATTACK,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+		if(assign == 'attacker') {
+			//spawn an Attacker with basic worker capacity
+			var spawning = Game.spawns[spawn].spawnCreep([ATTACK,MOVE,ATTACK,RANGED_ATTACK,WORK,CARRY,ATTACK,MOVE], newName, {memory: {role: assign}});
 			if (spawning < -4 ) {
-				spawning = Game.spawns[spawn].spawnCreep([WORK,RANGED_ATTACK,CARRY,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+				spawning = Game.spawns[spawn].spawnCreep([ATTACK,RANGED_ATTACK,MOVE,WORK,CARRY,ATTACK,MOVE], newName, {memory: {role: assign}});
 				if (spawning < -4 ) {
-					spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+					spawning = Game.spawns[spawn].spawnCreep([MOVE,RANGED_ATTACK,WORK,CARRY,ATTACK,MOVE], newName, {memory: {role: assign}});
 					if (spawning < -4 ) {
-						spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+						spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE,ATTACK,MOVE], newName, {memory: {role: assign}});
+						if (spawning < -4 ) {
+							spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,ATTACK,MOVE], newName, {memory: {role: assign}});
+						}
+					}
+				}
+			}
+		} else {
+			// spawn a worker with basic defence capacity
+			var spawning = Game.spawns[spawn].spawnCreep([WORK,RANGED_ATTACK,CARRY,WORK,RANGED_ATTACK,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+			if (spawning < -4 ) {
+				spawning = Game.spawns[spawn].spawnCreep([WORK,WORK,CARRY,RANGED_ATTACK,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+				if (spawning < -4 ) {
+					spawning = Game.spawns[spawn].spawnCreep([WORK,RANGED_ATTACK,CARRY,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+					if (spawning < -4 ) {
+						spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+						if (spawning < -4 ) {
+							spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,RANGED_ATTACK,MOVE], newName, {memory: {role: assign}});
+							if (spawning < -4 ) {
+								spawning = Game.spawns[spawn].spawnCreep([WORK,CARRY,MOVE], newName, {memory: {role: assign}});
+							}
+						}
 					}
 				}
 			}

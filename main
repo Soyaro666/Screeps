@@ -106,8 +106,7 @@ module.exports.loop = function () {
 								var buildy = sources[poi].pos.y - 1 + roady;
 								if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
 									Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_ROAD);
-									Game.spawns[spawn].memory.lastbuild = Game.time + 100;
-									console.log('building Road at '+buildx+', '+buildy);
+									Game.spawns[spawn].memory.lastbuild = Game.time + 500;
 								}
 							}
 						}

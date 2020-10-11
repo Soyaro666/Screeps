@@ -73,15 +73,11 @@ module.exports.loop = function () {
 				return (structure.structureType == STRUCTURE_EXTENSION);
 			}
 		});
-		var maxExtenders = roomLevel * 5 - 5;
 		var towers = Game.rooms[name].find(FIND_MY_STRUCTURES, {
 			filter: (structure) => {
 				return (structure.structureType == STRUCTURE_TOWER);
 			}
 		});
-		
-		var rng1 = Math.random() * 10 - 5;
-		var rng2 = Math.random() * 10 - 5;
 		
 		var terrain = Game.map.getRoomTerrain(Game.spawns[spawn].room.name);
 		var constructionSites = Game.spawns[spawn].room.find(FIND_CONSTRUCTION_SITES);
@@ -152,7 +148,7 @@ module.exports.loop = function () {
 				for(var dest in sources) {
 					for(var roadx = 0; roadx < 5; roadx++) {
 						for(var roady = 0; roady < 5; roady++) {
-							if(!(roadx == 1 && roady == 1)) {
+							if(!(roadx > 0 && roadx < 4 && roady > 0 && roady < 4)) {
 								var buildx = sources[dest].pos.x - 2 + roadx;
 								var buildy = sources[dest].pos.y - 2 + roady;
 								if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
@@ -166,20 +162,37 @@ module.exports.loop = function () {
 				}
 			}
 		}
-		if(roomLevel > 1 && extenders.length < maxExtenders && constructionSites.length < 1 && Game.spawns[spawn].memory.lastbuild < Game.time) {
-			if(Game.spawns[spawn].room.createConstructionSite(Game.spawns[spawn].pos.x+rng1, Game.spawns[spawn].pos.y+rng2, STRUCTURE_EXTENSION) == 0) {
-				Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+		var maxExtenders = roomLevel * 5 - 5;
+		if(roomLevel > 1 && extenders.length < maxExtenders && constructionSites.length < 1) {
+			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
+			for(var dest in sources) {
+				var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest], {ignoreCreeps:true});
+				var last = newStreet.pop();
+				var last = newStreet.pop();
+				for(var i = 1; i < newStreet.length; i = i + 2) {
+					var buildx = newStreet[i].x;
+					var buildy = newStreet[i].y;
+					if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
+						if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_EXTENSION) == 0) {
+							Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+						}
+					}
+				}
 			}
 		}
 		var maxTowers = Math.round(roomLevel / 4.5);
-		if(towers.length < maxTowers && Game.spawns[spawn].memory.lastbuild < Game.time) {
-			var rng1 = rng1 / 2;
-			var rng2 = rng2 / 2;
-			var buildx = Game.spawns[spawn].pos.x+rng1;
-			var buildy = Game.spawns[spawn].pos.y+rng2;
-			if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-				if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_TOWER) == 0) {
-					Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+		if(towers.length < maxTowers && constructionSites.length < 1) {
+			var dest = Game.rooms[name].controller;
+			var newStreet = Game.spawns[spawn].pos.findPathTo(dest, {ignoreCreeps:true});
+			var last = newStreet.pop();
+			var last = newStreet.pop();
+			for(var i = 1; i < newStreet.length; i = i + 2) {
+				var buildx = newStreet[i].x;
+				var buildy = newStreet[i].y;
+				if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
+					if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_TOWER) == 0) {
+						Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+					}
 				}
 			}
 		}

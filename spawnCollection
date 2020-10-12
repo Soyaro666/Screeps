@@ -155,7 +155,7 @@ var spawnCollection = {
 				}
 			}
 		}
-		var maxTowers = Math.round(roomLevel / 4.5);
+		var maxTowers = Math.round((roomLevel / 2) - 1);
 		if(towers.length < maxTowers && constructionSites.length < 1) {
 			var dest = Game.rooms[name].controller;
 			var newStreet = Game.spawns[spawn].pos.findPathTo(dest, {ignoreCreeps:true});

@@ -2,13 +2,14 @@ var taskRespawn = require('task.respawn');
 
 var surround = function(target, construction = STRUCTURE_ROAD, radius = 1, interval = 1) {
 	var diameter = radius * 2;
+	var terrain = Game.map.getRoomTerrain(target.room.name);
 	for(var constx = 0; constx <= diameter; constx = constx + interval) {
 		for(var consty = 0; consty <= diameter; consty = consty + interval) {
 			if(!(constx == radius && consty == radius)) {
 				var buildx = target.pos.x - radius + constx;
 				var buildy = target.pos.y - radius + consty;
 				if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-					Game.spawns[spawn].room.createConstructionSite(buildx, buildy, construction)
+					target.room.createConstructionSite(buildx, buildy, construction)
 				}
 			}
 		}
@@ -128,7 +129,7 @@ var spawnCollection = {
 				var sources = Game.rooms[name].find(FIND_MY_SPAWNS);
 				var sources = sources.concat(towers, extenders);
 				for(var dest in sources) {
-					surround(sources[dest], STRUCTURE_ROAD, 2);
+					surround(sources[dest]);
 				}
 				
 				var sources = Game.spawns[spawn].room.find(FIND_SOURCES);

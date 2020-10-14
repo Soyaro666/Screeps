@@ -1,19 +1,33 @@
 var taskRespawn = require('task.respawn');
 
+var buildArray = function(origin, path, structure = STRUCTURE_ROAD, interval = 1) {
+	var terrain = Game.map.getRoomTerrain(origin.room.name);
+	for(var road = 0; road < path.length; road = road + interval) {
+		var buildx = path[road].x;
+		var buildy = path[road].y;
+		if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
+			origin.room.createConstructionSite(buildx, buildy, structure);
+		}
+	}
+}
+
 var surround = function(target, construction = STRUCTURE_ROAD, radius = 1, interval = 1) {
 	var diameter = radius * 2;
 	var terrain = Game.map.getRoomTerrain(target.room.name);
+	const path = new Array();
 	for(var constx = 0; constx <= diameter; constx = constx + interval) {
 		for(var consty = 0; consty <= diameter; consty = consty + interval) {
 			if(!(constx == radius && consty == radius)) {
 				var buildx = target.pos.x - radius + constx;
 				var buildy = target.pos.y - radius + consty;
 				if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-					target.room.createConstructionSite(buildx, buildy, construction)
+					var position = constructor(buildx, buildy, target.room.name);
+					path.push(position);
 				}
 			}
 		}
 	}
+	buildArray(target, path, construction, interval);
 };
 
 var spawnCollection = {
@@ -74,20 +88,11 @@ var spawnCollection = {
 		var buildDelay = 200;
 
 		if(!(Game.spawns[spawn].memory.lastbuild) || Game.spawns[spawn].memory.lastbuild < Game.time) {
+			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
 			var chargeSource = Game.rooms[name].controller.pos.findClosestByPath(FIND_SOURCES);
 			var newStreet = Game.rooms[name].controller.pos.findPathTo(chargeSource, {ignoreCreeps:true});
 			var last = newStreet.pop();
-			for(var road in newStreet) {
-				if(road < newStreet.length) {
-					var buildx = newStreet[road].x;
-					var buildy = newStreet[road].y;
-					if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-						if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_ROAD)) {
-							Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
-						}
-					}
-				}
-			}
+			buildArray(Game.rooms[name].controller, newStreet);
 			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
 			var sources = sources.concat(towers, extenders, minerals);
 			var newLength = sources.push(Game.rooms[name].controller);
@@ -95,17 +100,7 @@ var spawnCollection = {
 			for(var dest in sources) {
 				var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest], {ignoreCreeps:true});
 				var last = newStreet.pop();
-				for(var road in newStreet) {
-					if(road < newStreet.length) {
-						var buildx = newStreet[road].x;
-						var buildy = newStreet[road].y;
-						if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-							if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_ROAD)) {
-								Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
-							}
-						}
-					}
-				}
+				buildArray(Game.spawns[spawn], newStreet);
 				
 			}
 			
@@ -134,15 +129,7 @@ var spawnCollection = {
 			var newStreet = Game.spawns[spawn].pos.findPathTo(sources[lane], {ignoreCreeps:true});
 			var last = newStreet.pop();
 			var last = newStreet.pop();
-			for(var i = 1; i < newStreet.length; i = i + 2) {
-				var buildx = newStreet[i].x;
-				var buildy = newStreet[i].y;
-				if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-					if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_EXTENSION) == 0) {
-						Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
-					}
-				}
-			}
+			buildArray(Game.spawns[spawn], newStreet, STRUCTURE_EXTENSION, 2);
 		}
 		var maxTowers = Math.round((roomLevel / 2) - 1);
 		if(towers.length < maxTowers && constructionSites.length < 1) {
@@ -150,15 +137,7 @@ var spawnCollection = {
 			var newStreet = Game.spawns[spawn].pos.findPathTo(dest, {ignoreCreeps:true});
 			var last = newStreet.pop();
 			var last = newStreet.pop();
-			for(var i = 1; i < newStreet.length; i = i + 2) {
-				var buildx = newStreet[i].x;
-				var buildy = newStreet[i].y;
-				if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-					if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_TOWER) == 0) {
-						Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
-					}
-				}
-			}
+			buildArray(Game.spawns[spawn], newStreet, STRUCTURE_TOWER, 2);
 		}
 	}
 };

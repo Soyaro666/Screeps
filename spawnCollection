@@ -140,17 +140,19 @@ var spawnCollection = {
 		var maxExtenders = roomLevel * 5 - 5;
 		if(roomLevel > 1 && extenders.length < maxExtenders && constructionSites.length < 1) {
 			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
-			for(var dest in sources) {
-				var newStreet = Game.spawns[spawn].pos.findPathTo(sources[dest], {ignoreCreeps:true});
-				var last = newStreet.pop();
-				var last = newStreet.pop();
-				for(var i = 1; i < newStreet.length; i = i + 2) {
-					var buildx = newStreet[i].x;
-					var buildy = newStreet[i].y;
-					if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
-						if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_EXTENSION) == 0) {
-							Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
-						}
+			var lane = roomLevel;
+			while(sources.length <= lane) {
+				lane = lane - sources.length;
+			}
+			var newStreet = Game.spawns[spawn].pos.findPathTo(sources[lane], {ignoreCreeps:true});
+			var last = newStreet.pop();
+			var last = newStreet.pop();
+			for(var i = 1; i < newStreet.length; i = i + 2) {
+				var buildx = newStreet[i].x;
+				var buildy = newStreet[i].y;
+				if(terrain.get(buildx, buildy) == 0 || terrain.get(buildx, buildy) == 2) {
+					if(Game.spawns[spawn].room.createConstructionSite(buildx, buildy, STRUCTURE_EXTENSION) == 0) {
+						Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
 					}
 				}
 			}

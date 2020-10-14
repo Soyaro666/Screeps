@@ -28,23 +28,7 @@ var spawnCollection = {
 		var builders = _.filter(localCreeps, (creep) => creep.memory.role == 'builder');
 		var explorers = _.filter(localCreeps, (creep) => creep.memory.role == 'explorer');
 		var roomLevel = Game.rooms[name].controller.level;
-		for(var builds in Game.rooms[name].structures) {
-			if(Game.structures[name].structureType == STRUCTURE_TOWER) {
-				var tower = Game.structures[name];
-			}
-			if(tower) {
-				var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-				var closestDamagedStructure = tower.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-					filter: (structure) => structure.hits < structure.hitsMax
-				});
-				if(closestHostile) {
-					tower.attack(closestHostile);
-				} else if(closestDamagedStructure) {
-					tower.repair(closestDamagedStructure);
-				}
-				var tower = false;
-			}
-		}
+		
 		console.log('Room "'+name+'" has '+Game.rooms[name].energyAvailable+' of '+Game.rooms[name].energyCapacityAvailable+' energy, '+attackers.length+' Attackers, '+builders.length+' Builders, '+chargers.length+' Chargers, '+upgraders.length+' Upgraders');
 		
 		var newTask = false;
@@ -83,6 +67,7 @@ var spawnCollection = {
 				return (structure.structureType == STRUCTURE_TOWER);
 			}
 		});
+		var minerals = Game.rooms[name].find(FIND_MINERALS);
 		
 		var terrain = Game.map.getRoomTerrain(Game.spawns[spawn].room.name);
 		var constructionSites = Game.spawns[spawn].room.find(FIND_CONSTRUCTION_SITES);
@@ -104,7 +89,7 @@ var spawnCollection = {
 				}
 			}
 			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
-			var sources = sources.concat(towers, extenders);
+			var sources = sources.concat(towers, extenders, minerals);
 			var newLength = sources.push(Game.rooms[name].controller);
 			
 			for(var dest in sources) {
@@ -126,7 +111,7 @@ var spawnCollection = {
 			
 			if(constructionSites < 1) {
 				var sources = Game.rooms[name].find(FIND_MY_SPAWNS);
-				var sources = sources.concat(towers, extenders);
+				var sources = sources.concat(towers, extenders, minerals);
 				for(var dest in sources) {
 					surround(sources[dest]);
 				}
@@ -140,6 +125,8 @@ var spawnCollection = {
 		var maxExtenders = roomLevel * 5 - 5;
 		if(roomLevel > 1 && extenders.length < maxExtenders && constructionSites.length < 1) {
 			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
+			var sources = sources.concat(minerals);
+			
 			var lane = roomLevel;
 			while(sources.length <= lane) {
 				lane = lane - sources.length;

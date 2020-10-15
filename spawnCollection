@@ -86,9 +86,10 @@ var spawnCollection = {
 		var terrain = Game.map.getRoomTerrain(Game.spawns[spawn].room.name);
 		var constructionSites = Game.spawns[spawn].room.find(FIND_CONSTRUCTION_SITES);
 		var buildDelay = 200;
+		var tempDelay = 0;
 
 		if(!(Game.spawns[spawn].memory.lastbuild) || Game.spawns[spawn].memory.lastbuild < Game.time) {
-			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+			tempDelay++;
 			var chargeSource = Game.rooms[name].controller.pos.findClosestByPath(FIND_SOURCES);
 			var newStreet = Game.rooms[name].controller.pos.findPathTo(chargeSource, {ignoreCreeps:true});
 			var last = newStreet.pop();
@@ -119,7 +120,7 @@ var spawnCollection = {
 		}
 		var maxExtenders = roomLevel * 5 - 5;
 		if(roomLevel > 1 && extenders.length < maxExtenders && constructionSites.length < 1) {
-			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+			tempdelay++;
 			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
 			var sources = sources.concat(minerals);
 			
@@ -134,12 +135,16 @@ var spawnCollection = {
 		}
 		var maxTowers = Math.round((roomLevel / 2) - 1);
 		if(towers.length < maxTowers && constructionSites.length < 1) {
-			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
+			tempDelay++;
 			var dest = Game.rooms[name].controller;
 			var newStreet = Game.spawns[spawn].pos.findPathTo(dest, {ignoreCreeps:true});
 			var last = newStreet.pop();
 			var last = newStreet.pop();
 			buildArray(Game.spawns[spawn], newStreet, STRUCTURE_TOWER, 2);
+		}
+		
+		if(tempDelay > 0) {
+			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
 		}
 	}
 };

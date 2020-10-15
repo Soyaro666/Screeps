@@ -119,6 +119,7 @@ var spawnCollection = {
 		}
 		var maxExtenders = roomLevel * 5 - 5;
 		if(roomLevel > 1 && extenders.length < maxExtenders && constructionSites.length < 1) {
+			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
 			var sources = Game.spawns[spawn].room.find(FIND_SOURCES);
 			var sources = sources.concat(minerals);
 			
@@ -133,6 +134,7 @@ var spawnCollection = {
 		}
 		var maxTowers = Math.round((roomLevel / 2) - 1);
 		if(towers.length < maxTowers && constructionSites.length < 1) {
+			Game.spawns[spawn].memory.lastbuild = Game.time + buildDelay;
 			var dest = Game.rooms[name].controller;
 			var newStreet = Game.spawns[spawn].pos.findPathTo(dest, {ignoreCreeps:true});
 			var last = newStreet.pop();

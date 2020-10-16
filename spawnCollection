@@ -82,7 +82,7 @@ var spawnCollection = {
 		
 		var terrain = Game.map.getRoomTerrain(Game.spawns[spawn].room.name);
 		var constructionSites = Game.spawns[spawn].room.find(FIND_CONSTRUCTION_SITES);
-		var buildDelay = 50;
+		var buildDelay = 200;
 		var tempDelay = 0;
 
 		if(!(Game.spawns[spawn].memory.lastbuild) || Game.spawns[spawn].memory.lastbuild < Game.time) {

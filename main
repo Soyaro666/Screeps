@@ -9,21 +9,14 @@ module.exports.loop = function () {
 			var spawn = localSpawns[0].name;
 			spawnCollection.run(name, spawn);
 		}
-		for(var builds in Game.rooms[name].structures) {
-			if(Game.structures[name].structureType == STRUCTURE_TOWER) {
-				var tower = Game.structures[name];
-			}
-			if(tower) {
-				var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-				var closestDamagedStructure = tower.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-					filter: (structure) => structure.hits < structure.hitsMax
-				});
-				if(closestHostile) {
-					tower.attack(closestHostile);
-				} else if(closestDamagedStructure) {
-					tower.repair(closestDamagedStructure);
-				}
-				var tower = false;
+		var tower = Game.rooms[name].find(FIND_MY_STRUCTURES, {filter: (structure) => structure.structureType == STRUCTURE_TOWER});
+		for(var i in tower) {
+			var closestHostile = tower[i].pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+			var closestDamagedStructure = tower[i].pos.findClosestByRange(FIND_MY_STRUCTURES, {filter: (structure) => structure.hits < structure.hitsMax});
+			if(closestHostile) {
+				tower[i].attack(closestHostile);
+			} else if(closestDamagedStructure) {
+				tower[i].repair(closestDamagedStructure);
 			}
 		}
 	}
